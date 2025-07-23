@@ -54,8 +54,6 @@ namespace QscQsys
         private readonly CTimer _commandQueueTimer;
         private readonly CTimer _heartbeatTimer;
         private readonly CTimer _waitForConnection;
-        //private TCPClientDevice _primaryClient;
-        //private TCPClientDevice _backupClient;
         private TcpClient _primaryClient;
         private TcpClient _backupClient;
         private Logger _logger = new Logger("QSYS");
@@ -73,7 +71,6 @@ namespace QscQsys
         private bool _backupIsConnected;
         private bool _isLoggedIn;
         private bool _disposed;
-        //private ushort _debug;
         private ushort _logonAttempts;
         private ushort _maxLogonAttempts = 2;
         private bool _isRedundant;
@@ -347,17 +344,11 @@ namespace QscQsys
 
                     _primaryClient = new TcpClient(string.Format("QSYS--{0}--PrimaryTcpClient", _coreId), _logger);
                     _backupClient = new TcpClient(string.Format("QSYS--{0}--BackupTcpClient", _coreId), _logger);
-                    //_primaryClient = new TCPClientDevice {Debug = _debug, ID = id + "-primary"};
-                    //_backupClient = new TCPClientDevice {Debug = _debug, ID = id + "-backup"};
 
                     _primaryClient.ConnectedChange += primaryClient_ConnectedChange;
-                    //_primaryClient.ConnectionStatus += primaryClient_ConnectionStatus;
                     _primaryClient.ResponseReceived += primaryClient_ResponseReceived;
-                    //_primaryClient.ResponseString += primaryClient_ResponseString;
                     _backupClient.ConnectedChange += backupClient_ConnectedChange;
-                    //_backupClient.ConnectionStatus += backupClient_ConnectionStatus;
                     _backupClient.ResponseReceived += backupClient_ResponseReceived;
-                    //_backupClient.ResponseString += backupClient_ResponseString;
                     _primaryClient.Connect(primaryHost, port);
                     if(backupHost != string.Empty)
                         _backupClient.Connect(backupHost, port);
@@ -650,7 +641,7 @@ namespace QscQsys
 
                 _logger.PrintLine("Primary response found ** {0} **", responseData);
 
-                ParseInternalResponse(true, responseData);
+                CrestronInvoke.BeginInvoke(x => ParseInternalResponse(true, responseData));
             }
 
             CMonitor.Exit(_primaryResponseLock);
@@ -678,7 +669,7 @@ namespace QscQsys
 
                 _logger.PrintLine("Backup response found ** {0} **", responseData);
 
-                ParseInternalResponse(false, responseData);
+                CrestronInvoke.BeginInvoke(x => ParseInternalResponse(false, responseData));
             }
 
             CMonitor.Exit(_backupResponseLock);
@@ -774,6 +765,8 @@ namespace QscQsys
                     var response = JObject.Parse(returnString);
                     var changes = response["params"]["Changes"].Children().ToList();
 
+                    _logger.PrintLine("Found {0} component changes", changes.Count());
+
                     foreach (var change in changes)
                     {
                         var changeResult = JsonConvert.DeserializeObject<ChangeResult>(change.ToString(),
@@ -782,11 +775,15 @@ namespace QscQsys
 
                         if (changeResult.Component != null)
                         {
+                            _logger.PrintLine("Found component {0}", changeResult.Component);
+
                             var choices = changeResult.Choices != null ? changeResult.Choices.ToList() : new List<string>();
 
                             Action<QsysStateData> updateCallback;
                             if (!TryGetNamedComponentUpdateCallback(changeResult.Component, out updateCallback))
                                 continue;
+
+                            _logger.PrintLine("Found {0} callback, sending...", changeResult.Component);
 
                             updateCallback(new QsysStateData("change", changeResult.Name,
                                 changeResult.Value,
@@ -795,7 +792,7 @@ namespace QscQsys
                         }
                         else if (changeResult.Name != null)
                         {
-                            List<string> choices = changeResult.Choices != null ? changeResult.Choices.ToList() : new List<string>();
+                            var choices = changeResult.Choices != null ? changeResult.Choices.ToList() : new List<string>();
 
                             Action<QsysStateData> controlUpdateCallback;
                             if (!TryGetNamedControlUpdateCallback(changeResult.Name, out controlUpdateCallback))
@@ -961,7 +958,6 @@ namespace QscQsys
         public void NewExternalResponse(string response)
         {
             ParseInternalResponse(true, response);
-            //ProcessResponse(true, response);
         }
         #endregion
 

@@ -200,17 +200,16 @@ namespace QscQsys.NamedComponents
                     break;
                 case CONTROL_RECENT_CALLS:
                     _recentCalls.Clear();
-                    foreach (var choice in args.Choices)
+                    foreach (var newChoice in args.Choices.Select(choice => JsonConvert.DeserializeObject<ListBoxChoice>(choice)).Where(newChoice => newChoice != null))
                     {
-                        var newChoice = JsonConvert.DeserializeObject<ListBoxChoice>(choice);
                         _recentCalls.Add(newChoice);
                     }
 
                     if (onRecentCallsEvent != null)
                     {
-                        List<string> calls = new List<string> { string.Empty, string.Empty, string.Empty, string.Empty, string.Empty };
+                        var calls = new List<string> { string.Empty, string.Empty, string.Empty, string.Empty, string.Empty };
 
-                        for (int i = 0; i <= 4; i++)
+                        for (var i = 0; i <= 4; i++)
                         {
                             if (_recentCalls.Count > i)
                             {
@@ -225,12 +224,10 @@ namespace QscQsys.NamedComponents
                     }
                     if (onRecentCallListEvent != null)
                     {
-                        List<string> calls = new List<string>();
+                        var calls = new List<string>();
 
-                        foreach (var call in calls)
+                        foreach (var encodedBytes in calls.Select(call => XSig.GetBytes(calls.IndexOf(call), call)))
                         {
-
-                            var encodedBytes = XSig.GetBytes(calls.IndexOf(call), call);
                             onRecentCallListEvent(ComponentName, Encoding.GetEncoding(28591).GetString(encodedBytes, 0, encodedBytes.Length));
                         }
                     }
