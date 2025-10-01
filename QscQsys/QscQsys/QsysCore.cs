@@ -314,6 +314,9 @@ namespace QscQsys
         /// </summary>
         public void Initialize(string id, string primaryHost, string backupHost, ushort port, string username, string password, ushort useExternalConnection)
         {
+            if (_isInitialized)
+                return;
+
             lock (_initLock)
             {
                 if (_isInitialized)
@@ -324,11 +327,11 @@ namespace QscQsys
                     _coreId = id;
                     _logger = new Logger(string.Format("QSYS--{0}", _coreId));
 
-                    _externalConnection = Convert.ToBoolean(useExternalConnection);
+                    _externalConnection = useExternalConnection > 0;
 
-                    _username = username.Length > 0 ? username : string.Empty;
+                    _username = username;
 
-                    _password = password.Length > 0 ? password : string.Empty;
+                    _password = password;
 
                     QsysCoreManager.AddCore(this);
 
@@ -342,8 +345,8 @@ namespace QscQsys
                         return;
                     }
 
-                    _primaryClient = new TcpClient(string.Format("QSYS--{0}--PrimaryTcpClient", _coreId), _logger);
-                    _backupClient = new TcpClient(string.Format("QSYS--{0}--BackupTcpClient", _coreId), _logger);
+                    _primaryClient = new TcpClient(string.Format("QSYS--{0}--PrimaryTcpClient", id), _logger);
+                    _backupClient = new TcpClient(string.Format("QSYS--{0}--BackupTcpClient", id), _logger);
 
                     _primaryClient.ConnectedChange += primaryClient_ConnectedChange;
                     _primaryClient.ResponseReceived += primaryClient_ResponseReceived;
@@ -390,7 +393,6 @@ namespace QscQsys
 
                 var components = GetNamedComponents().ToArray();
                 components.ForEach(AddComponentToChangeGroup);
-
 
                 if ((_primaryCoreActive && !_primaryIsConnected) || (_backupCoreActive && !_backupIsConnected))
                     return;
@@ -590,7 +592,7 @@ namespace QscQsys
 
         #region NamedControlCallbacks
 
-        private void SubscribeControl(NamedControl control)
+        private void SubscribeControl(IQsysIntermediaryControl control)
         {
             if (control == null)
                 return;
@@ -598,7 +600,7 @@ namespace QscQsys
             control.OnSubscribeChanged += ControlOnSubscribeChanged;
         }
 
-        private void UnsubscribeControl(NamedControl control)
+        private void UnsubscribeControl(IQsysIntermediaryControl control)
         {
             if (control == null)
                 return;
@@ -627,24 +629,32 @@ namespace QscQsys
             }
 
             if (!CMonitor.TryEnter(_primaryResponseLock)) return;
-            while (_primaryRxData.ToString().Contains("\x00"))
+
+            try
             {
-                string responseData;
-
-                lock (_primaryParseLock)
+                while (true)
                 {
-                    responseData = _primaryRxData.ToString();
-                    var delimeterPos = responseData.IndexOf("\x00", StringComparison.Ordinal);
-                    responseData = responseData.Substring(0, delimeterPos);
-                    _primaryRxData.Remove(0, delimeterPos + 1);
+                    string responseData = null;
+
+                    lock (_primaryParseLock)
+                    {
+                        var delimeterPos = _primaryRxData.ToString().IndexOf("\x00", StringComparison.Ordinal);
+                        if (delimeterPos < 0)
+                            break;
+
+                        responseData = _primaryRxData.ToString(0, delimeterPos);
+                        _primaryRxData.Remove(0, delimeterPos + 1);
+                    }
+
+                    _logger.PrintLine("Primary response found ** {0} **", responseData);
+
+                    ParseInternalResponse(true, responseData);
                 }
-
-                _logger.PrintLine("Primary response found ** {0} **", responseData);
-
-                CrestronInvoke.BeginInvoke(x => ParseInternalResponse(true, responseData));
             }
-
-            CMonitor.Exit(_primaryResponseLock);
+            finally
+            {
+                CMonitor.Exit(_primaryResponseLock);
+            }
         }
 
         private void backupClient_ResponseReceived(object sender, StringEventArgs args)
@@ -655,24 +665,32 @@ namespace QscQsys
             }
 
             if (!CMonitor.TryEnter(_backupResponseLock)) return;
-            while (_backupRxData.ToString().Contains("\x00"))
+
+            try
             {
-                string responseData;
-
-                lock (_backupParseLock)
+                while (true)
                 {
-                    responseData = _backupRxData.ToString();
-                    var delimeterPos = responseData.IndexOf("\x00", StringComparison.Ordinal);
-                    responseData = responseData.Substring(0, delimeterPos);
-                    _backupRxData.Remove(0, delimeterPos + 1);
+                    string responseData = null;
+
+                    lock (_backupParseLock)
+                    {
+                        var delimeterPos = _backupRxData.ToString().IndexOf("\x00", StringComparison.Ordinal);
+                        if (delimeterPos < 0)
+                            break;
+
+                        responseData = _backupRxData.ToString(0, delimeterPos);
+                        _backupRxData.Remove(0, delimeterPos + 1);
+                    }
+
+                    _logger.PrintLine("Backup response found ** {0} **", responseData);
+
+                    ParseInternalResponse(true, responseData);
                 }
-
-                _logger.PrintLine("Backup response found ** {0} **", responseData);
-
-                CrestronInvoke.BeginInvoke(x => ParseInternalResponse(false, responseData));
             }
-
-            CMonitor.Exit(_backupResponseLock);
+            finally
+            {
+                CMonitor.Exit(_backupResponseLock);
+            }
         }
 
         private void primaryClient_ConnectedChange(object sender, ModuleFramework.Events.BoolEventArgs args)
