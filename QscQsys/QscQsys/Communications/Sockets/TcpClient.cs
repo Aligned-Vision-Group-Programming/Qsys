@@ -90,6 +90,7 @@ namespace QscQsys.Communications.Sockets
 
         private void Client_SocketStatusChange(TCPClient client, SocketStatus clientSocketStatus)
         {
+            string status;
             lock (MainLock)
             {
                 if (ProtectedDisposed)
@@ -106,14 +107,14 @@ namespace QscQsys.Communications.Sockets
                     ProtectedConnected = true;
                 }
 
-                var status = GetSocketStatusName(clientSocketStatus);
+                status = GetSocketStatusName(clientSocketStatus);
                 Logger.LogNotice("SocketStatus changed {0}", status);
-
-                OnConnectedChange(new BoolEventArgs(ProtectedConnected));
-                OnConnectionStatusChange(
-                    new ConnectionStatusChangeEventArgs(new ConnectionStatusChangePayload((ushort)clientSocketStatus,
-                        status)));
             }
+
+            OnConnectedChange(new BoolEventArgs(ProtectedConnected));
+            OnConnectionStatusChange(
+                new ConnectionStatusChangeEventArgs(new ConnectionStatusChangePayload((ushort) clientSocketStatus,
+                    status)));
         }
 
         /// <summary>
@@ -150,12 +151,17 @@ namespace QscQsys.Communications.Sockets
                     Disconnect();
                 }
 
-                Logger.PrintLine("Connection starting {0}:{1}...", ipAddress, port);
-                Logger.LogNotice("Connection starting {0}:{1}...", ipAddress, port);
                 _retryTimer.Stop();
 
                 if (_client != null)
+                {
                     _client.SocketStatusChange -= Client_SocketStatusChange;
+                    _client.Dispose();
+                }
+
+                Logger.PrintLine("Connection starting {0}:{1}...", ipAddress, port);
+                Logger.LogNotice("Connection starting {0}:{1}...", ipAddress, port);
+               
 
                 _client = new TCPClient(ipAddress, port, 65535);
                 _client.SocketStatusChange += Client_SocketStatusChange;
@@ -286,7 +292,8 @@ namespace QscQsys.Communications.Sockets
                 if (!IsConnected) return;
                 var c = new string(command.Take(command.Length).Select(b => (char)b).ToArray());
                 Logger.PrintLine("Sending command -->{0}<--", c.ReplaceHex());
-                _client.SendData(command, command.Length);
+                if(_client != null)
+                    _client.SendData(command, command.Length);
             }
             catch (Exception ex)
             {
