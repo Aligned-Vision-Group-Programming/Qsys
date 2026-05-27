@@ -141,6 +141,14 @@ namespace QscQsys.Utils
                     return "zoom_in";
                 case QsysCamera.PtzTypes.ZoomOut:
                     return "zoom_out";
+                case QsysCamera.PtzTypes.LeftUp:
+                    return "pan_left_tilt_up";
+                case QsysCamera.PtzTypes.LeftDown:
+                    return "pan_left_tilt_down";
+                case QsysCamera.PtzTypes.RightUp:
+                    return "pan_right_tilt_up";
+                case QsysCamera.PtzTypes.RightDown:
+                    return "pan_right_tilt_down";
                 default:
                     throw new ArgumentOutOfRangeException("type");
             }

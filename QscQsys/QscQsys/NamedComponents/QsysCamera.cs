@@ -496,6 +496,26 @@ namespace QscQsys.NamedComponents
             StopPTZ(PtzTypes.Left);
         }
 
+        public void PanLeftUp()
+        {
+            StartPTZ(PtzTypes.LeftUp);
+        }
+
+        public void StopPanLeftUp()
+        {
+            StopPTZ(PtzTypes.LeftUp);
+        }
+
+        public void PanLeftDown()
+        {
+            StartPTZ(PtzTypes.LeftUp);
+        }
+
+        public void StopPanLeftDown()
+        {
+            StopPTZ(PtzTypes.LeftUp);
+        }
+
         public void PanRight()
         {
             StartPTZ(PtzTypes.Right);
@@ -504,6 +524,26 @@ namespace QscQsys.NamedComponents
         public void StopPanRight()
         {
             StopPTZ(PtzTypes.Right);
+        }
+
+        public void PanRightUp()
+        {
+            StartPTZ(PtzTypes.RightUp);
+        }
+
+        public void StopPanRightUp()
+        {
+            StopPTZ(PtzTypes.RightUp);
+        }
+
+        public void PanRightDown()
+        {
+            StartPTZ(PtzTypes.RightUp);
+        }
+
+        public void StopPanRightDown()
+        {
+            StopPTZ(PtzTypes.RightDown);
         }
 
         public void ZoomIn()
@@ -533,7 +573,11 @@ namespace QscQsys.NamedComponents
             Left = 3,
             Right = 4,
             ZoomIn = 5,
-            ZoomOut = 6
+            ZoomOut = 6,
+            LeftUp = 7,
+            LeftDown = 8,
+            RightUp = 9,
+            RightDown = 10
         }
     }
 }

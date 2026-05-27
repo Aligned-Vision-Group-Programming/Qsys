@@ -1,5 +1,5 @@
 #CATEGORY "46" "Qsys" // Custom
-#SYMBOL_NAME "Qsys Generic LevelMute Component Control"
+#SYMBOL_NAME "Qsys Generic LevelMute Named Control"
 
 #USER_SIMPLSHARP_LIBRARY "QscQsys"
 #ENABLE_TRACE
