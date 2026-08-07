@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 using Crestron.SimplSharp;
 using JetBrains.Annotations;
 using QscQsys.Intermediaries;
@@ -113,6 +114,7 @@ namespace QscQsys.NamedComponents
         private ushort _currentBlue;
         private ushort _currentAutoFocus;
         private bool _currentAutoFrame;
+        private string _currentPtzCoordinates;
 
         public bool PrivacyValue { get { return _currentPrivacy; } }
         public ushort BrightnessValue { get { return _currentBri; } }
@@ -130,6 +132,7 @@ namespace QscQsys.NamedComponents
         public ushort BlueGainValue { get { return _currentBlue; } }
         public ushort AutoFocusValue { get { return _currentAutoFocus; } }
         public bool AutoFrameValue { get { return _currentAutoFrame; } }
+        public string PtzCoordinates { get { return _currentPtzCoordinates; } }
 
         public void Initialize(string coreId, string componentName)
         {
@@ -175,84 +178,112 @@ namespace QscQsys.NamedComponents
                         onPrivacyChange(ComponentName, Convert.ToUInt16(args.Value));
                     break;
                 case CONTROL_IMAGE_BRIGHTNESS:
+                    _currentBri = SimplUtils.ScaleToUshort(args.Position);
+
                     if (onBrightnessChange != null)
                     {
                         onBrightnessChange(ComponentName, SimplUtils.ScaleToUshort(args.Position));
                     }
                     break;
                 case CONTROL_IMAGE_SATURATION:
+                    _currentSat = SimplUtils.ScaleToUshort(args.Position);
+
                     if (onSaturationChange != null)
                     {
                         onSaturationChange(ComponentName, SimplUtils.ScaleToUshort(args.Position));
                     }
                     break;
                 case CONTROL_IMAGE_SHARPNESS:
+                    _currentSharp = SimplUtils.ScaleToUshort(args.Position);
+
                     if (onSharpnessChange != null)
                     {
                         onSharpnessChange(ComponentName, SimplUtils.ScaleToUshort(args.Position));
                     }
                     break;
                 case CONTROL_IMAGE_CONTRAST:
+                    _currentCont = SimplUtils.ScaleToUshort(args.Position);
+
                     if (onContrastChange != null)
                     {
                         onContrastChange(ComponentName, SimplUtils.ScaleToUshort(args.Position));
                     }
                     break;
                 case CONTROL_EXPOSURE_MODE:
+                    _currentExpMode = args.StringValue;
+
                     if (onExposureModeChange != null)
                     {
                         onExposureModeChange(ComponentName, args.StringValue);
                     }
                     break;
                 case CONTROL_EXPOSURE_IRIS:
+                    _currentIris = args.StringValue;
+
                     if (onIrisChange != null)
                     {
                         onIrisChange(ComponentName, args.StringValue);
                     }
                     break;
                 case CONTROL_EXPOSURE_SHUTTER:
+                    _currentShutter = args.StringValue;
+
                     if (onShutterChange != null)
                     {
                         onShutterChange(ComponentName, args.StringValue);
                     }
                     break;
                 case CONTROL_EXPOSURE_GAIN:
+                    _currentGain = SimplUtils.ScaleToUshort(args.Position);
+
                     if (onGainChange != null)
                     {
                         onGainChange(ComponentName, SimplUtils.ScaleToUshort(args.Position));
                     }
                     break;
                 case CONTROL_WHITEBALANCE_AUTO_SENSITIVITY:
+                    _currentAwbSens = args.StringValue;
+
                     if (onAutoWhiteBalanceSensitivityChange != null)
                     {
                         onAutoWhiteBalanceSensitivityChange(ComponentName, args.StringValue);
                     }
                     break;
                 case CONTROL_WHITEBALANCE_AUTO_MODE:
+                    _currentAwbMode = args.StringValue;
+
                     if (onAutoWhiteBalanceModeChange != null)
                     {
                         onAutoWhiteBalanceModeChange(ComponentName, args.StringValue);
                     }
                     break;
                 case CONTROL_WHITEBALANCE_HUE:
+                    _currentHue = SimplUtils.ScaleToUshort(args.Position);
+
                     if (onWhiteBalanceHueChange != null)
                     {
                         onWhiteBalanceHueChange(ComponentName,SimplUtils.ScaleToUshort(args.Position));
                     }
                     break;
                 case CONTROL_WHITEBALANCE_GAIN_RED:
+                    _currentRed = SimplUtils.ScaleToUshort(args.Position);
+
                     if (onWhiteBalanceRedGainChange != null)
                     {
                         onWhiteBalanceRedGainChange(ComponentName,SimplUtils.ScaleToUshort(args.Position));
                     }
                     break;
                 case CONTROL_WHITEBALANCE_GAIN_BLUE:
+                    _currentBlue = SimplUtils.ScaleToUshort(args.Position);
+
                     if (onWhiteBalanceBlueGainChange != null)
                     {
                         onWhiteBalanceBlueGainChange(ComponentName,SimplUtils.ScaleToUshort(args.Position));
                     }
                     break;
                 case CONTROL_FOCUS_AUTO:
+                    _currentAutoFocus = (ushort) args.Value;
+
                     if (onAutoFocusChange != null)
                     {
                         onAutoFocusChange(ComponentName, (ushort)args.Value);
@@ -260,12 +291,15 @@ namespace QscQsys.NamedComponents
                     break;
                 case CONTROL_AUTOFRAME_TOGGLE:
                     _currentAutoFrame = Convert.ToBoolean(args.Value);
+
                     if (onAutoFrameChange != null)
                     {
                         onAutoFrameChange(ComponentName, (ushort)args.Value);
                     }
                     break;
                 case CONTROL_PTZ_PRESET:
+                    _currentPtzCoordinates = args.StringValue;
+
                     if (onPtzCoordinatesChange != null)
                     {
                         onPtzCoordinatesChange(ComponentName, args.StringValue);
@@ -590,6 +624,17 @@ namespace QscQsys.NamedComponents
             LeftDown = 8,
             RightUp = 9,
             RightDown = 10
+        }
+
+        public void SetPtzCoordinates(string coordinates)
+        {
+            if (Component == null)
+                return;
+
+            if (!Regex.IsMatch(coordinates, @"^-?(?:\d+\.?\d*|\.\d+)\s+-?(?:\d+\.?\d*|\.\d+)\s+-?(?:\d+\.?\d*|\.\d+)$"))
+                return;
+
+            Component.SendChangeStringValue(CONTROL_PTZ_PRESET, coordinates);
         }
     }
 }
