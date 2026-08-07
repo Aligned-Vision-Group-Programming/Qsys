@@ -41,6 +41,8 @@ namespace QscQsys.NamedComponents
 
         public delegate void AutoFrameChange(SimplSharpString componentName, ushort autoFrameEnableValue);
 
+        public delegate void PtzCoordinatesChange(SimplSharpString componentName, SimplSharpString ptzCoordinates);
+
         [PublicAPI("S+")]
         public PrivacyChange onPrivacyChange { get; set; }
         [PublicAPI("S+")]
@@ -73,6 +75,8 @@ namespace QscQsys.NamedComponents
         public AutoFocusChange onAutoFocusChange { get; set; }
         [PublicAPI("S+")]
         public AutoFrameChange onAutoFrameChange { get; set; }
+        [PublicAPI("S+")]
+        public PtzCoordinatesChange onPtzCoordinatesChange { get; set; }
 
 
         private const string CONTROL_TOGGLE_PRIVACY = "toggle_privacy";
@@ -91,6 +95,7 @@ namespace QscQsys.NamedComponents
         private const string CONTROL_WHITEBALANCE_GAIN_BLUE = "wb_blue_gain";
         private const string CONTROL_FOCUS_AUTO = "focus_auto";
         private const string CONTROL_AUTOFRAME_TOGGLE = "autoframe_enable";
+        private const string CONTROL_PTZ_PRESET = "ptz_preset";
 
         private bool _currentPrivacy;
         private ushort _currentBri;
@@ -154,6 +159,7 @@ namespace QscQsys.NamedComponents
             component.LazyLoadComponentControl(CONTROL_WHITEBALANCE_GAIN_BLUE);
             component.LazyLoadComponentControl(CONTROL_FOCUS_AUTO);
             component.LazyLoadComponentControl(CONTROL_AUTOFRAME_TOGGLE);
+            component.LazyLoadComponentControl(CONTROL_PTZ_PRESET);
         }
 
         protected override void ComponentOnFeedbackReceived(object sender, QsysInternalEventsArgs args)
@@ -257,6 +263,12 @@ namespace QscQsys.NamedComponents
                     if (onAutoFrameChange != null)
                     {
                         onAutoFrameChange(ComponentName, (ushort)args.Value);
+                    }
+                    break;
+                case CONTROL_PTZ_PRESET:
+                    if (onPtzCoordinatesChange != null)
+                    {
+                        onPtzCoordinatesChange(ComponentName, args.StringValue);
                     }
                     break;
             }
