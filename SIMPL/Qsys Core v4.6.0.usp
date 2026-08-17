@@ -27,7 +27,7 @@ QsysCore processor;
 
 threadsafe push Initialize
 {
-	while(!_waitTillStart);
+	while(!_waitTillStart) delay(10);
 	
 	processor.Initialize(CoreID, _primaryIpa, _backupIpa, _port, _username, _password, UseExternalConnection);
 }
@@ -39,7 +39,7 @@ change DebugMode
 
 threadsafe change PrimaryIpAddress
 {
-	while(!_allowProps);
+	while(!_allowProps) delay(10);
 	
 	while(_primaryIpa != PrimaryIpAddress)
 	{
@@ -53,7 +53,7 @@ threadsafe change PrimaryIpAddress
 
 threadsafe change BackupIpAddress
 {
-	while(!_allowProps);
+	while(!_allowProps) delay(10);
 	
 	while(_backupIpa != BackupIpAddress)
 	{
@@ -67,7 +67,7 @@ threadsafe change BackupIpAddress
 
 threadsafe change Username
 {
-	while(!_allowProps);
+	while(!_allowProps) delay(10);
 	
 	while(_username != Username)
 	{
@@ -81,7 +81,7 @@ threadsafe change Username
 
 threadsafe change Password
 {
-	while(!_allowProps);
+	while(!_allowProps) delay(10);
 	
 	while(_password != Password)
 	{
@@ -95,7 +95,7 @@ threadsafe change Password
 
 threadsafe change Port
 {
-	while(!_allowProps);
+	while(!_allowProps) delay(10);
 	
 	while(_port != Port)
 	{

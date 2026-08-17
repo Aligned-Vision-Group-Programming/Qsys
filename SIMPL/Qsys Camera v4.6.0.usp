@@ -61,8 +61,9 @@ string_output _skip_, ExposureModeValue, IrisValue, ShutterValue;
 analog_output GainValue;
 string_output _skip_, AutoWhiteBalnceModeValue, AutoWhiteBalanceSensitivityValue;
 analog_output WhiteBalanceHueValue, WhiteBalanceRedGainValue, WhiteBalanceBlueGainValue;
+string_output _skip_, RtspStreamUrl;
 
-String_Parameter _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, CoreID[100], ComponentName[100];
+String_Parameter _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, CoreID[100], ComponentName[100];
 
 #BEGIN_PARAMETER_PROPERTIES CoreID
 propValidUnits = unitString;
@@ -669,6 +670,11 @@ callback function NewPtzCoordinatesChange(string cName, string val)
 	PtzCoordinates = val;
 }
 
+callback function NewRtspStreamUrlChange(string cName, string url)
+{
+	RtspStreamUrl = url;
+}
+
 Function Main()
 {
 	RegisterDelegate(camera, onPrivacyChange, NewPrivacyChange);
@@ -688,6 +694,7 @@ Function Main()
 	RegisterDelegate(camera, onAutoFocusChange, NewAutoFocusChange);
 	RegisterDelegate(camera, onAutoFrameChange, NewAutoFrameChange);
 	RegisterDelegate(camera, onPtzCoordinatesChange, NewPtzCoordinatesChange);
-	
+	RegisterDelegate(camera, onRtspStreamUrlChange, NewRtspStreamUrlChange);
+
 	camera.Initialize(CoreID, ComponentName);
 }
