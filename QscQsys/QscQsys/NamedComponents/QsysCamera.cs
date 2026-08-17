@@ -44,6 +44,8 @@ namespace QscQsys.NamedComponents
 
         public delegate void PtzCoordinatesChange(SimplSharpString componentName, SimplSharpString ptzCoordinates);
 
+        public delegate void RtspStreamUrlChange(SimplSharpString componentName, SimplSharpString url);
+
         [PublicAPI("S+")]
         public PrivacyChange onPrivacyChange { get; set; }
         [PublicAPI("S+")]
@@ -78,6 +80,8 @@ namespace QscQsys.NamedComponents
         public AutoFrameChange onAutoFrameChange { get; set; }
         [PublicAPI("S+")]
         public PtzCoordinatesChange onPtzCoordinatesChange { get; set; }
+        [PublicAPI("S+")]
+        public RtspStreamUrlChange onRtspStreamUrlChange { get; set; }
 
 
         private const string CONTROL_TOGGLE_PRIVACY = "toggle_privacy";
@@ -97,6 +101,7 @@ namespace QscQsys.NamedComponents
         private const string CONTROL_FOCUS_AUTO = "focus_auto";
         private const string CONTROL_AUTOFRAME_TOGGLE = "autoframe_enable";
         private const string CONTROL_PTZ_PRESET = "ptz_preset";
+        private const string CONTROL_RTSP_STREAM = "ip_streams_preview_rtsp_url";
 
         private bool _currentPrivacy;
         private ushort _currentBri;
@@ -115,6 +120,7 @@ namespace QscQsys.NamedComponents
         private ushort _currentAutoFocus;
         private bool _currentAutoFrame;
         private string _currentPtzCoordinates;
+        private string _currentRtspStreamUrl;
 
         public bool PrivacyValue { get { return _currentPrivacy; } }
         public ushort BrightnessValue { get { return _currentBri; } }
@@ -133,6 +139,7 @@ namespace QscQsys.NamedComponents
         public ushort AutoFocusValue { get { return _currentAutoFocus; } }
         public bool AutoFrameValue { get { return _currentAutoFrame; } }
         public string PtzCoordinates { get { return _currentPtzCoordinates; } }
+        public string RtspStreamUrl { get { return _currentRtspStreamUrl; } }
 
         public void Initialize(string coreId, string componentName)
         {
@@ -163,6 +170,7 @@ namespace QscQsys.NamedComponents
             component.LazyLoadComponentControl(CONTROL_FOCUS_AUTO);
             component.LazyLoadComponentControl(CONTROL_AUTOFRAME_TOGGLE);
             component.LazyLoadComponentControl(CONTROL_PTZ_PRESET);
+            component.LazyLoadComponentControl(CONTROL_RTSP_STREAM);
         }
 
         protected override void ComponentOnFeedbackReceived(object sender, QsysInternalEventsArgs args)
@@ -303,6 +311,14 @@ namespace QscQsys.NamedComponents
                     if (onPtzCoordinatesChange != null)
                     {
                         onPtzCoordinatesChange(ComponentName, args.StringValue);
+                    }
+                    break;
+                case CONTROL_RTSP_STREAM:
+                    _currentRtspStreamUrl = args.StringValue;
+
+                    if (onRtspStreamUrlChange != null)
+                    {
+                        onRtspStreamUrlChange(ComponentName, args.StringValue);
                     }
                     break;
             }
