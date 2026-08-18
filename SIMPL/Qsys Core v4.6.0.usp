@@ -21,15 +21,61 @@ integer_parameter Default_Port;
 string_parameter Default_Username[100], Default_Password[100], CoreID[100];
 
 string _primaryIpa[255], _backupIpa[255], _username[100], _password[100];
-integer _waitTillStart, _allowProps, _port;
+integer _waitTillStart, _allowProps, _port, _initWriteCnt;
 
 QsysCore processor;
+CMutex _initMutex;
+CEvent _initEvent;
+
+function IncrementInitWriteCnt()
+{
+	_initMutex.WaitForMutex();
+	_initEvent.Reset();
+	_initWriteCnt = _initWriteCnt + 1;
+	_initMutex.ReleaseMutex();
+}
+
+function DecrementInitWriteCnt()
+{
+	integer cnt;
+	_initMutex.WaitForMutex();
+	if(_initWriteCnt > 0)
+	{
+		_initWriteCnt = _initWriteCnt - 1;
+		cnt = _initWriteCnt;
+	}
+	_initMutex.ReleaseMutex();
+
+	if(cnt = 0) _initEvent.Set();
+}
+
 
 threadsafe push Initialize
 {
+	string primaryIpa[255], backupIpa[255], username[100], password[100];
+	integer port;
+
 	while(!_waitTillStart) delay(10);
 	
-	processor.Initialize(CoreID, _primaryIpa, _backupIpa, _port, _username, _password, UseExternalConnection);
+	while(1)
+	{
+		_initEvent.Wait(-1);
+
+		_initMutex.WaitForMutex();
+		if(_initWriteCnt = 0)
+		{
+			primaryIpa = _primaryIpa;
+			backupIpa = _backupIpa;
+			username = _username;
+			password = _password;
+			port = _port;
+			_initMutex.ReleaseMutex();
+			break;
+		}
+		_initMutex.ReleaseMutex();
+	}
+
+	processor.Initialize(CoreID, primaryIpa, backupIpa, port, username, password, UseExternalConnection);
 }
 
 change DebugMode
@@ -40,6 +86,8 @@ change DebugMode
 threadsafe change PrimaryIpAddress
 {
 	while(!_allowProps) delay(10);
+
+	IncrementInitWriteCnt();
 	
 	while(_primaryIpa != PrimaryIpAddress)
 	{
@@ -49,12 +97,16 @@ threadsafe change PrimaryIpAddress
 			processor.PrimaryHost = _primaryIpa;
 		}
 	}
+
+	DecrementInitWriteCnt();
 }
 
 threadsafe change BackupIpAddress
 {
 	while(!_allowProps) delay(10);
-	
+
+	IncrementInitWriteCnt();
+
 	while(_backupIpa != BackupIpAddress)
 	{
 		_backupIpa = BackupIpAddress;
@@ -63,12 +115,16 @@ threadsafe change BackupIpAddress
 			processor.BackupHost = _backupIpa;
 		}
 	}
+	
+	DecrementInitWriteCnt();
 }
 
 threadsafe change Username
 {
 	while(!_allowProps) delay(10);
 	
+	IncrementInitWriteCnt();
+
 	while(_username != Username)
 	{
 		_username = Username;
@@ -77,12 +133,16 @@ threadsafe change Username
 			processor.Username = _username;
 		}
 	}
+
+	DecrementInitWriteCnt();
 }
 
 threadsafe change Password
 {
 	while(!_allowProps) delay(10);
 	
+	IncrementInitWriteCnt();
+
 	while(_password != Password)
 	{
 		_password = Password;
@@ -91,12 +151,16 @@ threadsafe change Password
 			processor.Password = _password;
 		}
 	}
+
+	DecrementInitWriteCnt();
 }
 
 threadsafe change Port
 {
 	while(!_allowProps) delay(10);
 	
+	IncrementInitWriteCnt();
+
 	while(_port != Port)
 	{
 		_port = Port;
@@ -105,6 +169,8 @@ threadsafe change Port
 			processor.Port = _port;
 		}
 	}
+
+	DecrementInitWriteCnt();
 }
 
 callback function NewIsRegistered(string id, integer value)
