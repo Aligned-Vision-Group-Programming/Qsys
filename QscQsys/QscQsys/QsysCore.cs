@@ -66,6 +66,7 @@ namespace QscQsys
         private readonly object _initLock = new object();
 
         private readonly CCriticalSection _connectionCritical = new CCriticalSection();
+        private bool _internalInit;
         private bool _isInitialized;
         private bool _primaryIsConnected;
         private bool _backupIsConnected;
@@ -314,18 +315,21 @@ namespace QscQsys
         /// </summary>
         public void Initialize(string id, string primaryHost, string backupHost, ushort port, string username, string password, ushort useExternalConnection)
         {
-            if (_isInitialized)
+            if (_internalInit)
                 return;
 
             lock (_initLock)
             {
-                if (_isInitialized)
+                if (_internalInit)
                     return;
 
                 try
                 {
                     _coreId = id;
                     _logger = new Logger(string.Format("QSYS--{0}", _coreId));
+
+                    CrestronConsole.PrintLine(string.Format("Initialzing core({0}): primary host: {1}, backup host: {2}, port: {3}, username: {4}, password {5}, use external connection: {6}",
+                        id, primaryHost, backupHost, port, username, password, useExternalConnection));
 
                     _externalConnection = useExternalConnection > 0;
 
@@ -355,6 +359,8 @@ namespace QscQsys
                     _primaryClient.Connect(primaryHost, port);
                     if(backupHost != string.Empty)
                         _backupClient.Connect(backupHost, port);
+
+                    _internalInit = true;
                 }
                 catch (Exception e)
                 {
