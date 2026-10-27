@@ -652,7 +652,7 @@ namespace QscQsys
                         _primaryRxData.Remove(0, delimeterPos + 1);
                     }
 
-                    _logger.PrintLine("Primary response found ** {0} **", responseData);
+                    //_logger.PrintLine("Primary response found ** {0} **", responseData);
 
                     ParseInternalResponse(true, responseData);
                 }
@@ -688,7 +688,7 @@ namespace QscQsys
                         _backupRxData.Remove(0, delimeterPos + 1);
                     }
 
-                    _logger.PrintLine("Backup response found ** {0} **", responseData);
+                   // _logger.PrintLine("Backup response found ** {0} **", responseData);
 
                     ParseInternalResponse(true, responseData);
                 }
@@ -789,7 +789,7 @@ namespace QscQsys
                     var response = JObject.Parse(returnString);
                     var changes = response["params"]["Changes"].Children().ToList();
 
-                    _logger.PrintLine("Found {0} component changes", changes.Count());
+                    _logger.PrintLine("Found {0} component/control changes", changes.Count());
 
                     foreach (var change in changes)
                     {
@@ -799,7 +799,8 @@ namespace QscQsys
 
                         if (changeResult.Component != null)
                         {
-                            _logger.PrintLine("Found component {0}", changeResult.Component);
+                            _logger.PrintLine("Found component {0} change", changeResult.Component);
+                            _logger.PrintLine("--Name={0}, Value=[1}, Position={2}, String={3}", changeResult.Name, changeResult.Value, changeResult.Position, changeResult.String);
 
                             var choices = changeResult.Choices != null ? changeResult.Choices.ToList() : new List<string>();
 
@@ -816,6 +817,9 @@ namespace QscQsys
                         }
                         else if (changeResult.Name != null)
                         {
+                            _logger.PrintLine("Found control {0} change", changeResult.Name);
+                            _logger.PrintLine("--Value=[0}, Position={1}, String={2}", changeResult.Value, changeResult.Position, changeResult.String);
+
                             var choices = changeResult.Choices != null ? changeResult.Choices.ToList() : new List<string>();
 
                             Action<QsysStateData> controlUpdateCallback;
