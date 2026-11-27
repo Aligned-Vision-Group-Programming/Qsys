@@ -1,0 +1,62 @@
+#CATEGORY "46" "Qsys" // Custom
+
+#DEFINE_CONSTANT true 1
+#DEFINE_CONSTANT false 0
+
+#USER_SIMPLSHARP_LIBRARY "QscQsys"
+
+digital_input SetBooleanStateOn;
+digital_input SetBooleanStateOff;
+digital_input ToggleBooleanState;
+digital_input MomentaryBooleanPress;
+
+digital_output BooleanState;
+
+string_parameter  _skip_, _skip_, _skip_, _skip_, CoreID[100], ComponentName[100], ComponentControlName[100];
+#BEGIN_PARAMETER_PROPERTIES CoreID
+   propValidUnits = unitString;
+   propDefaultUnit = unitString;
+   propDefaultValue = "1";
+#END_PARAMETER_PROPERTIES
+
+
+BoolGenericComponentControl booleanControl;
+
+push SetBooleanStateOn
+{
+    booleanControl.SetBoolean(true);
+}
+
+push SetBooleanStateOff
+{
+    booleanControl.SetBoolean(false);
+}
+
+push ToggleBooleanState
+{
+    if(BooleanState)
+        booleanControl.SetBoolean(true);
+    else
+        booleanControl.SetBoolean(false);
+}
+
+push MomentaryBooleanPress
+{
+	booleanControl.SetBoolean(true);
+}                                
+
+release MomentaryBooleanPress
+{
+	booleanControl.SetBoolean(false);
+}
+
+callback function DataChanged(string compName, string contName, integer value)
+{
+    BooleanState = value;
+}
+
+function Main()
+{
+    RegisterDelegate(booleanControl, DataChangedCallback, DataChanged);
+    booleanControl.Initialize(CoreID, ComponentName, ComponentControlName);
+}
