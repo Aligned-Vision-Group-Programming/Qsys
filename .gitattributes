@@ -5,6 +5,7 @@
 *.smw binary
 *.umc binary
 *.ush binary
+*.usp text eol=crlf
 
 # Crestron VT Pro files
 *.vtp binary
